@@ -42,34 +42,37 @@ def load_datasets():
 
 
 def main():
-    device="cuda" if torch.cuda.is_available() else "cpu"
-    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     model = load_model()
-    ckpt_path="/home/yolcu/Documents/Code/dualxda-package/checkpoints/MNIST_basic_conv_best"
+    ckpt_path = (
+        "/home/yolcu/Documents/Code/dualxda-package/checkpoints/MNIST_basic_conv_best"
+    )
     checkpoint = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(checkpoint["model_state"])
 
     train_ds, evalds = load_datasets()
-    
-    da = DualDA(
+    ldr = torch.utils.data.DataLoader(evalds, batch_size=32, shuffle=False)
+
+    with DualDA(
         model,
         train_ds,
         "features",
         device,
         cache_dir="/home/yolcu/Documents/Code/dualxda-package/cache",
-    )
-
-    ldr=torch.utils.data.DataLoader(evalds, batch_size=32, shuffle=False)
-    x,y=next(iter(ldr))
-    preds=model(x.to("cuda")).argmax(dim=-1)
-    xpl=da.explain(x=x, xpl_targets=preds)
-    xpl_2=da.explain(x=x, xpl_targets=preds, drop_zero_columns=True)
-    assert torch.all(xpl[:,da.active_indices]==xpl_2)
-    si=da.self_influences()
-    si_2=da.self_influences(drop_zero_columns=True)
-    xpl=da.explain(da.samples, da.labels)
-    pass
-
+    ) as da:
+        x, y = next(iter(ldr))
+        preds = model(x.to("cuda")).argmax(dim=-1)
+        xpl = da.attribute(x=x, xpl_targets=preds)
+        xpl_2 = da.attribute(x=x, xpl_targets=preds, drop_zero_columns=True)
+        assert torch.all(xpl[:, da.active_indices] == xpl_2)
+        si = da.self_influences()
+        si_2 = da.self_influences(drop_zero_columns=True)
+        assert torch.all(si[da.active_indices] == si_2)
+        x, y = da.dataset[da.active_indices[25]]
+        siscalar = da.attribute(x[None], torch.tensor([y]),drop_zero_columns=True)[25]
+        assert torch.isclose(si_2[25],siscalar)
+        
 
 if __name__ == "__main__":
     main()
