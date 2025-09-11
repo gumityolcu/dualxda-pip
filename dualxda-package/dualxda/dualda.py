@@ -1,4 +1,4 @@
-from utils.image import display_img, colourgradarrow
+from .utils import display_img, colourgradarrow
 import torch
 import os
 import time
@@ -347,7 +347,7 @@ class DualDA:
 
         if len(to_attribute.shape) == 2:
             to_attribute = to_attribute[None]  # Add color dimension for greyscale
-
+        # Make a new composite that registers a special Rule to override initial relevances
         with Gradient(model=self.model.features, composite=composite) as attributor:
             _, relevance = attributor(to_attribute[None], attr_output)
 
@@ -612,6 +612,7 @@ class DualDA:
         plt.savefig(
             os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
         )
+        plt.close(fig)
 
     def da_figure(
         self,
@@ -727,101 +728,6 @@ class DualDA:
         )
         ax.axis("off")
 
-        # # Add hline between Row 1 and 2 and between Row 3 and 4
-        # ax = fig.add_subplot(gs[0:2, 0 : 2 * nsamples + 2 + 1 + 2])
-        # ax.axhline(
-        #     y=1 / 2, xmin=0.04, xmax=1, linestyle="-", linewidth=2, color="black"
-        # )
-        # ax.axis("off")
-
-        # ax = fig.add_subplot(gs[2:4, 0 : 2 * nsamples + 2 + 1 + 2])
-        # ax.axhline(
-        #     y=1 / 2, xmin=0.04, xmax=1, linestyle="-", linewidth=2, color="black"
-        # )
-        # ax.axis("off")
-
-        # # Row 1 + Row 4: 'XDA' title
-        # ax = fig.add_subplot(gs[0, nsamples + 1 : nsamples + 2 + 1 + 2])
-        # # ax.text(0.5, 0.5, "$\\bf{XDA}$", fontsize=30, ha="center", va="center")
-        # ax.axis("off")
-        # ax = fig.add_subplot(gs[3, nsamples + 1 : nsamples + 2 + 1 + 2])
-        # # ax.text(0.5, 0.5, "$\\bf{XDA}$", fontsize=30, ha="center", va="center")
-        # ax.axis("off")
-
-        # # Row 1 + Row 5: XDA
-        # for i in range(nsamples):
-        #     # Proponents
-        #     # Train
-        #     ax = fig.add_subplot(gs[0, nsamples + 2 + i + 1 + 2])
-        #     relevance = self.xda_heatmap(
-        #         test_sample,
-        #         proponent_idxs[i],
-        #         attr[proponent_idxs[i]],
-        #         mode="train",
-        #         composite=composite,
-        #     )
-        #     img = imgify(relevance, cmap="bwr", symmetric=True)
-        #     display_img(ax, self.dataset[proponent_idxs[i]][0], inv_transform)
-        #     ax.imshow(img, alpha=0.9)
-        #     ax.axis("on")
-        #     ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-        #     for spine in ax.spines.values():
-        #         spine.set_color("black")
-        #         spine.set_linewidth(2)
-        #     # Test
-        #     ax = fig.add_subplot(gs[3, nsamples + 2 + i + 1 + 2])
-        #     relevance = self.xda_heatmap(
-        #         test_sample,
-        #         proponent_idxs[i],
-        #         attr[proponent_idxs[i]],
-        #         mode="test",
-        #         composite=composite,
-        #     )
-        #     img = imgify(relevance, cmap="bwr", symmetric=True)
-        #     display_img(ax, test_sample.cpu(), inv_transform)
-        #     ax.imshow(img, alpha=0.9)
-        #     ax.axis("on")
-        #     ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-        #     for spine in ax.spines.values():
-        #         spine.set_color("black")
-        #         spine.set_linewidth(2)
-
-        #     # Opponents
-        #     # Train
-        #     ax = fig.add_subplot(gs[0, nsamples - 1 - i + 1])
-        #     relevance = self.xda_heatmap(
-        #         test_sample,
-        #         opponent_idxs[i],
-        #         attr[opponent_idxs[i]],
-        #         mode="train",
-        #         composite=composite,
-        #     )
-        #     img = imgify(relevance, cmap="bwr", symmetric=True)
-        #     display_img(ax, self.dataset[opponent_idxs[i]][0], inv_transform)
-        #     ax.imshow(img, alpha=0.9)
-        #     ax.axis("on")
-        #     ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-        #     for spine in ax.spines.values():
-        #         spine.set_color("black")
-        #         spine.set_linewidth(2)
-        #     # Test
-        #     ax = fig.add_subplot(gs[3, nsamples - 1 - i + 1])
-        #     relevance = self.xda_heatmap(
-        #         test_sample,
-        #         opponent_idxs[i],
-        #         attr[opponent_idxs[i]],
-        #         mode="test",
-        #         composite=composite,
-        #     )
-        #     img = imgify(relevance, cmap="bwr", symmetric=True)
-        #     display_img(ax, test_sample.cpu(), inv_transform)
-        #     ax.imshow(img, alpha=0.9)
-        #     ax.axis("on")
-        #     ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
-        #     for spine in ax.spines.values():
-        #         spine.set_color("black")
-        #         spine.set_linewidth(2)
-
         # Add proponent arrow (red)
         ax = fig.add_subplot(gs[0, nsamples + 2 : 2 * nsamples + 2])
         colourgradarrow(ax, (0, 0.5), (nsamples, 0.5), cmap="Reds_r", n=100, lw=10)
@@ -832,26 +738,14 @@ class DualDA:
         colourgradarrow(ax, (nsamples, 0.5), (0, 0.5), cmap="Blues_r", n=100, lw=10)
         ax.axis("off")
 
-        # # Add train/text
-        # ax = fig.add_subplot(gs[0, 0])
-        # ax.text(0.8, 0.5, "Train", rotation=90, fontsize=30, ha="center", va="center")
-        # ax.axis("off")
-
-        # ax = fig.add_subplot(gs[3, 0])
-        # ax.text(0.8, 0.5, "Test", rotation=90, fontsize=30, ha="center", va="center")
-        # ax.axis("off")
-
-        # # Add vertical line
-        # ax = fig.add_subplot(gs[0:4, 0:2])
-        # ax.axvline(x=1 / 2, ymin=0.0, ymax=1, linestyle="-", linewidth=2, color="black")
-        # ax.axis("off")
-
         plt.tight_layout()
         os.makedirs(save_path, exist_ok=True)
         # plt.show(block=True)
         plt.savefig(
             os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
         )
+        plt.close(fig)
+
 
     @property
     def active_indices(self):
