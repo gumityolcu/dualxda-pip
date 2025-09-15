@@ -19,7 +19,7 @@ def main():
     with DualDA(
         model,
         train_ds,
-        "features.fc-1",
+        "classifier",
         device,
         cache_dir="/home/yolcu/Documents/Code/dualxda-package/cache",
     ) as da:

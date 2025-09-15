@@ -44,7 +44,7 @@ class DualDA:
         self,
         model,
         dataset,
-        feature_layer,
+        classifier_layer,
         device,
         cache_dir,
         C=1.0,
@@ -61,7 +61,7 @@ class DualDA:
 
         # core parameters
         self.dataset = dataset
-        self.feature_layer = feature_layer
+        self.classifier = classifier_layer
         self.device = device
         self.model = model
         dev = torch.device(device)
@@ -73,17 +73,18 @@ class DualDA:
         # Define the hook
         def get_hook_fn(layer):
             def hook_fn(module, input, output):
-                if len(output.shape) != 2:
-                    output = torch.flatten(output, 1)
-                self.hook_out[layer] = output.detach().to(self.device)
+                input=input[0]
+                if len(input.shape) != 2:
+                    input = torch.flatten(input, 1)
+                self.hook_out[layer] = input.detach().to(self.device)
 
             return hook_fn
 
         # Register the hook
-        layer = dict(model.named_modules()).get(feature_layer, None)
+        layer = dict(model.named_modules()).get(classifier_layer, None)
         if layer is None:
-            raise ValueError(f"Layer '{feature_layer}' not found in model.")
-        self.hook_handle = layer.register_forward_hook(get_hook_fn(feature_layer))
+            raise ValueError(f"Layer '{classifier_layer}' not found in model.")
+        self.hook_handle = layer.register_forward_hook(get_hook_fn(classifier_layer))
 
         self.coefficients = None  # the coefficients for each training datapoint x class
         self.learned_weights = None
@@ -107,8 +108,8 @@ class DualDA:
                 y = y.to(self.device)
                 with torch.no_grad():
                     x = model(x)
-                    # self.samples = torch.cat((self.samples, hook_out[features_layer].to(self.device)), 0)
-                    self.samples.append(self.hook_out[feature_layer].to(self.device))
+                    # self.samples = torch.cat((self.samples, hook_out[classifier_layer].to(self.device)), 0)
+                    self.samples.append(self.hook_out[classifier_layer].to(self.device))
                     self.labels = torch.cat((self.labels, y), 0)
             self.samples = torch.concat(self.samples)
 
@@ -237,7 +238,7 @@ class DualDA:
             x = x.to(self.device)
             xpl_targets = xpl_targets.to(self.device)
             _ = self.model(x)
-            f = self.hook_out[self.feature_layer]
+            f = self.hook_out[self.classifier]
             crosscorr = torch.matmul(f, self.samples.T)
             crosscorr = crosscorr[:, :, None]
             xpl = self.coefficients * crosscorr
@@ -332,17 +333,17 @@ class DualDA:
         train_input = train_input.to(self.device)
         with torch.no_grad():
             self.model(train_input[None])
-            train_features = self.hook_out[self.feature_layer]
+            train_features = self.hook_out[self.classifier]
             self.model(test_input[None])
-            test_features = self.hook_out[self.feature_layer]
+            test_features = self.hook_out[self.classifier]
             # TODO: multiplied or plain init relevances??
             attr_output = (
                 test_features
                 * train_features
                 * (attribution / (train_features @ test_features.T))
             )
-        xda_rule=get_xda_rule(self.model, composite, self.feature_layer, attr_output)
-        new_composite=NameMapComposite(name_map=[([self.feature_layer], xda_rule)])
+        xda_rule=get_xda_rule(self.model, composite, self.classifier, attr_output)
+        new_composite=NameMapComposite(name_map=[([self.classifier], xda_rule)])
         new_composite=MixedComposite([new_composite, composite])
         to_attribute = train_input[0] if mode == "train" else test_input[0]
 
@@ -611,10 +612,10 @@ class DualDA:
         plt.tight_layout()
         os.makedirs(save_path, exist_ok=True)
         plt.show(block=True)
-        plt.savefig(
-            os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
-        )
-        # plt.close(fig)
+        #plt.savefig(
+        #    os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
+        #)
+        plt.close(fig)
 
     def da_figure(
         self,
