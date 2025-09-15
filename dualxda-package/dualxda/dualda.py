@@ -1,4 +1,4 @@
-from .utils import display_img, colourgradarrow
+from .utils import display_img, colourgradarrow, get_xda_rule
 import torch
 import os
 import time
@@ -9,14 +9,13 @@ from tqdm import tqdm
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms.functional import to_pil_image
 from zennit.composites import (
-    EpsilonGammaBox,
     EpsilonPlusFlat,
     EpsilonPlus,
     EpsilonAlpha2Beta1,
     NameMapComposite,
     MixedComposite,
 )
-from zennit.rules import Flat, Pass
+from zennit.rules import Flat
 from zennit.canonizers import SequentialMergeBatchNorm
 from zennit.attribution import Gradient
 
@@ -308,8 +307,7 @@ class DualDA:
             return 20
 
     def lrp(self, test_input, class_to_explain, composite):
-        with torch.no_grad():
-            num_classes = self.model(test_input[None]).shape[-1]
+        num_classes = self.coefficients.shape[-1]
 
         if class_to_explain == None:
             class_to_explain = test_input[1]
@@ -330,26 +328,30 @@ class DualDA:
         self, test_input, train_idx, attribution, mode="train", composite=EpsilonPlus()
     ):
         train_input, _ = self.dataset[train_idx]
+        num_classes = self.coefficients.shape[-1]
         train_input = train_input.to(self.device)
         with torch.no_grad():
             self.model(train_input[None])
             train_features = self.hook_out[self.feature_layer]
             self.model(test_input[None])
             test_features = self.hook_out[self.feature_layer]
+            # TODO: multiplied or plain init relevances??
             attr_output = (
                 test_features
                 * train_features
                 * (attribution / (train_features @ test_features.T))
             )
-            attr_output=torch.ones_like(attr_output)
-
+        xda_rule=get_xda_rule(self.model, composite, self.feature_layer, attr_output)
+        new_composite=NameMapComposite(name_map=[([self.feature_layer], xda_rule)])
+        new_composite=MixedComposite([new_composite, composite])
         to_attribute = train_input[0] if mode == "train" else test_input[0]
 
         if len(to_attribute.shape) == 2:
             to_attribute = to_attribute[None]  # Add color dimension for greyscale
+
         # Make a new composite that registers a special Rule to override initial relevances
-        with Gradient(model=self.model.features, composite=composite) as attributor:
-            _, relevance = attributor(to_attribute[None], attr_output)
+        with Gradient(model=self.model, composite=new_composite) as attributor:
+            _, relevance = attributor(to_attribute[None], torch.zeros(1,num_classes,device=self.device))
 
         relevance = relevance[0].sum(0).detach().cpu()
 
@@ -374,8 +376,8 @@ class DualDA:
         attr = attr.to(self.device)
         composite = self._resolve_composite(composite=composite, canonizer=canonizer, flat_layers=flat_layers)
         size = 2
-        proponent_idxs = torch.topk(attr, nsamples).indices
-        opponent_idxs = torch.topk(-attr, nsamples).indices
+        proponent_idxs = torch.topk(attr, nsamples).indices[:nsamples]
+        opponent_idxs = torch.topk(-attr, nsamples).indices[:nsamples]
         # Create figure with dualxda-package/test_attribution.pya specific size ratio to keep squares
         fig = plt.figure(figsize=((2 * nsamples + 2) * size, 4 * size))
 
@@ -608,11 +610,11 @@ class DualDA:
 
         plt.tight_layout()
         os.makedirs(save_path, exist_ok=True)
-        # plt.show(block=True)
+        plt.show(block=True)
         plt.savefig(
             os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
         )
-        plt.close(fig)
+        # plt.close(fig)
 
     def da_figure(
         self,

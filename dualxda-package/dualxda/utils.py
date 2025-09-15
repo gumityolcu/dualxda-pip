@@ -1,17 +1,4 @@
 import torch
-
-from zennit.composites import (
-    EpsilonGammaBox,
-    EpsilonPlusFlat,
-    EpsilonPlus,
-    EpsilonAlpha2Beta1,
-)
-from zennit.canonizers import SequentialMergeBatchNorm
-from zennit.attribution import Gradient
-from zennit.image import imgify
-
-import matplotlib.patches as patches
-
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.transforms
@@ -19,8 +6,18 @@ import matplotlib.path
 from matplotlib.collections import LineCollection
 import matplotlib.colors as colors
 
+from zennit.core import BasicHook
 
 
+def get_xda_rule(model, composite, layer_name, init_grad):
+
+    original_rule_cls=composite.module_map({},layer_name, model.get_submodule(layer_name)).__class__
+    class OverrideRelevance(original_rule_cls):
+        def backward(self, module, grad_input, grad_output):
+            return super(original_rule_cls, self).backward(
+                    module, grad_input, init_grad
+                )
+    return OverrideRelevance()
 
 def truncate_colormap(cmapIn="jet", minval=0.0, maxval=1.0, n=100):
     """truncate_colormap(cmapIn='jet', minval=0.0, maxval=1.0, n=100)"""

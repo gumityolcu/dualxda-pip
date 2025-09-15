@@ -1,4 +1,4 @@
-from dualda import DualDA
+from dualxda import DualDA
 from models import BasicConvModel
 from test.MNIST import MNIST
 import torch
