@@ -16,8 +16,8 @@ dependencies = [
     "torchvision",
     "zennit",
     "matplotlib",
-    "sklearn-dual @ git+https://github.com/gumityolcu/scikit-learn-dual.git@main"
+    "scikit-learn-dual @ git+https://github.com/gumityolcu/scikit-learn-dual.git@main"
 ]
 
 [tool.setuptools]
-packages = ["your_package"] 
+packages = ["dualxda"] 
