@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dualxda"
+version = "0.1.0"
+description = "A library for DualDA: a state-of-the-art data attribution method for classification"
+authors = [{name="Galip Ümit Yolcu", email="galip.uemit.yolcu@fraunhofer.de"}, {name="Moritz Weckbecker",email="moritz.weckbecker@fraunhofer.de"}]
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = [
+    "torch",
+    "numpy",
+    "tqdm",
+    "torchvision",
+    "zennit",
+    "matplotlib",
+    "sklearn-dual @ git+https://github.com/gumityolcu/scikit-learn-dual.git@main"
+]
+
+[tool.setuptools]
+packages = ["your_package"] 
