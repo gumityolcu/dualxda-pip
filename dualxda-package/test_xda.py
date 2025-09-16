@@ -27,7 +27,6 @@ def main():
             x, y = next(iter(ldr))
             preds = model(x.to("cuda")).argmax(dim=-1)
             xpl = da.attribute(x=x, xpl_targets=preds)
-
             da.xda(
                 test_sample=x[i],
                 inv_transform=train_ds.inverse_transform,
@@ -38,18 +37,8 @@ def main():
                 composite="EpsilonPlus",
                 canonizer="SequentialMergeBatchNorm",
                 save_path="./xda_figures",
-                nsamples=5)
-            da.xda(
-                test_sample=x[i],
-                inv_transform=train_ds.inverse_transform,
-                class_names=range(10),
-                attr=xpl[i],
-                attr_target=preds[i],
-                fname=f"test_{i}_model",
-                composite="EpsilonPlus",
-                canonizer="SequentialMergeBatchNorm",
-                save_path="./xda_figures",
-                nsamples=5)
+                nsamples=6)
+
         
 
 if __name__ == "__main__":

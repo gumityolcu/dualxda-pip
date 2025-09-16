@@ -1,17 +1,14 @@
-from .utils import display_img, colourgradarrow, get_xda_rule
+from .utils import display_img, colourgradarrow, InitRelevanceRule
 import torch
 import os
 import time
-from sklearn.svm import (
+from sklearn_dual.svm import (
     LinearSVC,
 )  ## We modified LIBLINEAR MCSVM_CS_Solver which returns the dual variables
 from tqdm import tqdm
-from torch.utils.data.dataset import Dataset
-from torchvision.transforms.functional import to_pil_image
 from zennit.composites import (
     EpsilonPlusFlat,
     EpsilonPlus,
-    EpsilonAlpha2Beta1,
     NameMapComposite,
     MixedComposite,
 )
@@ -25,8 +22,7 @@ import matplotlib.gridspec as gridspec
 from zennit.image import imgify
 from zennit.core import Composite
 
-# TODO: delete line
-matplotlib.use("Qt5Agg")
+
 
 
 class DualDA:
@@ -73,7 +69,7 @@ class DualDA:
         # Define the hook
         def get_hook_fn(layer):
             def hook_fn(module, input, output):
-                input=input[0]
+                input = input[0]
                 if len(input.shape) != 2:
                     input = torch.flatten(input, 1)
                 self.hook_out[layer] = input.detach().to(self.device)
@@ -300,8 +296,8 @@ class DualDA:
 
     @classmethod
     def get_fontsize_from_nsamples(cls, nsamples):
-        if nsamples <=3:
-            return 15
+        if nsamples <= 4:
+            return 12
         elif nsamples == 5:
             return 17
         else:
@@ -336,15 +332,15 @@ class DualDA:
             train_features = self.hook_out[self.classifier]
             self.model(test_input[None])
             test_features = self.hook_out[self.classifier]
-            # TODO: multiplied or plain init relevances??
             attr_output = (
                 test_features
                 * train_features
                 * (attribution / (train_features @ test_features.T))
             )
-        xda_rule=get_xda_rule(self.model, composite, self.classifier, attr_output)
-        new_composite=NameMapComposite(name_map=[([self.classifier], xda_rule)])
-        new_composite=MixedComposite([new_composite, composite])
+        new_composite = NameMapComposite(
+            name_map=[([self.classifier], InitRelevanceRule(attr_output))]
+        )
+        new_composite = MixedComposite([new_composite, composite])
         to_attribute = train_input[0] if mode == "train" else test_input[0]
 
         if len(to_attribute.shape) == 2:
@@ -352,7 +348,9 @@ class DualDA:
 
         # Make a new composite that registers a special Rule to override initial relevances
         with Gradient(model=self.model, composite=new_composite) as attributor:
-            _, relevance = attributor(to_attribute[None], torch.zeros(1,num_classes,device=self.device))
+            _, relevance = attributor(
+                to_attribute[None], torch.zeros(1, num_classes, device=self.device)
+            )
 
         relevance = relevance[0].sum(0).detach().cpu()
 
@@ -372,10 +370,11 @@ class DualDA:
         flat_layers=None,
         save_path=None,
     ):
-        # TODO : change font size w.r.t. nsamples
         test_sample = test_sample.to(self.device)
         attr = attr.to(self.device)
-        composite = self._resolve_composite(composite=composite, canonizer=canonizer, flat_layers=flat_layers)
+        composite = self._resolve_composite(
+            composite=composite, canonizer=canonizer, flat_layers=flat_layers
+        )
         size = 2
         proponent_idxs = torch.topk(attr, nsamples).indices[:nsamples]
         opponent_idxs = torch.topk(-attr, nsamples).indices[:nsamples]
@@ -533,6 +532,7 @@ class DualDA:
                 spine.set_linewidth(2)
             # Test
             ax = fig.add_subplot(gs[3, nsamples + 2 + i + 1 + 2])
+
             relevance = self.xda_heatmap(
                 test_sample,
                 proponent_idxs[i],
@@ -552,6 +552,7 @@ class DualDA:
             # Opponents
             # Train
             ax = fig.add_subplot(gs[0, nsamples - 1 - i + 1])
+
             relevance = self.xda_heatmap(
                 test_sample,
                 opponent_idxs[i],
@@ -569,6 +570,7 @@ class DualDA:
                 spine.set_linewidth(2)
             # Test
             ax = fig.add_subplot(gs[3, nsamples - 1 - i + 1])
+
             relevance = self.xda_heatmap(
                 test_sample,
                 opponent_idxs[i],
@@ -611,10 +613,9 @@ class DualDA:
 
         plt.tight_layout()
         os.makedirs(save_path, exist_ok=True)
-        plt.show(block=True)
-        #plt.savefig(
-        #    os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
-        #)
+        plt.savefig(
+            os.path.join(save_path, f"{fname}.png"), dpi=300, bbox_inches="tight"
+        )
         plt.close(fig)
 
     def da_figure(
@@ -749,7 +750,6 @@ class DualDA:
         )
         plt.close(fig)
 
-
     @property
     def active_indices(self):
         return torch.where(self._active_indices)[0]
@@ -757,7 +757,3 @@ class DualDA:
     @property
     def name(self):
         return f"DualDA_C={str(self.C)}"
-
-
-# TODO: automatic Canonizer selection
-# TODO: automatic Composite selection

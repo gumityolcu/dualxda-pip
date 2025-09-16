@@ -9,15 +9,25 @@ import matplotlib.colors as colors
 from zennit.core import BasicHook
 
 
-def get_xda_rule(model, composite, layer_name, init_grad):
+class InitRelevanceRule(BasicHook):
+    def __init__(self, init_grad):
+        super().__init__()
+        self.init_grad = init_grad
 
-    original_rule_cls=composite.module_map({},layer_name, model.get_submodule(layer_name)).__class__
-    class OverrideRelevance(original_rule_cls):
-        def backward(self, module, grad_input, grad_output):
-            return super(original_rule_cls, self).backward(
-                    module, grad_input, init_grad
-                )
-    return OverrideRelevance()
+    def backward(self, module, grad_input, grad_output):
+        init = self.init_grad.to(grad_output[0].device).type_as(grad_output[0])
+
+        if isinstance(grad_input, (list, tuple)):
+            # fill with None except for the first relevant slot
+            outs = [None] * len(grad_input)
+            outs[0] = init
+            return tuple(outs)
+        else:
+            return (init,)  # single tensor input
+
+    def copy(self):
+        return InitRelevanceRule(self.init_grad)
+
 
 def truncate_colormap(cmapIn="jet", minval=0.0, maxval=1.0, n=100):
     """truncate_colormap(cmapIn='jet', minval=0.0, maxval=1.0, n=100)"""
@@ -28,6 +38,7 @@ def truncate_colormap(cmapIn="jet", minval=0.0, maxval=1.0, n=100):
         cmapIn(np.linspace(minval, maxval, n)),
     )
     return new_cmap
+
 
 # from https://stackoverflow.com/questions/47163796/using-colormap-with-annotate-arrow-in-matplotlib
 def colourgradarrow(ax, start, end, cmap="viridis", n=50, lw=3):
@@ -50,12 +61,14 @@ def colourgradarrow(ax, start, end, cmap="viridis", n=50, lw=3):
     ax.scatter(end[0], end[1], c=1, s=(2 * lw) ** 2, marker=tri, cmap=cmap, vmin=0)
     ax.autoscale_view()
 
+
 def display_img(ax, input, inverse_transform):
-    img = torch.clip(inverse_transform(input.clone().detach()), min=0., max=1.).squeeze()
-    channels=img.shape[0]
+    img = torch.clip(
+        inverse_transform(input.clone().detach()), min=0.0, max=1.0
+    ).squeeze()
+    channels = img.shape[0]
     if channels == 3:
-        img.permute(1,2,0)
+        img.permute(1, 2, 0)
         ax.imshow(img)
     else:
-        ax.imshow(img, cmap='gray_r')
-
+        ax.imshow(img, cmap="gray_r")
