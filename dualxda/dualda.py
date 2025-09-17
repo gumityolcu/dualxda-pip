@@ -1,10 +1,16 @@
+# Copyright (c) 2024, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & the authors: Galip Ümit Yolcu, Moritz Weckbecker, Wojciech Samek, Sebastian Lapuschkin.
+# Licensed under CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
 from .utils import display_img, colourgradarrow, InitRelevanceRule
-import torch
+
 import os
 import time
+
+import torch
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from sklearn_dual.svm import (
     LinearSVC,
-)  ## We modified LIBLINEAR MCSVM_CS_Solver which returns the dual variables
+)  ## We modified LIBLINEAR MCSVM_CS_Solver to return the dual variables after training
 from tqdm import tqdm
 from zennit.composites import (
     EpsilonPlusFlat,
@@ -15,14 +21,7 @@ from zennit.composites import (
 from zennit.rules import Flat
 from zennit.canonizers import SequentialMergeBatchNorm
 from zennit.attribution import Gradient
-
-import matplotlib.pyplot as plt
-import matplotlib
-import matplotlib.gridspec as gridspec
 from zennit.image import imgify
-from zennit.core import Composite
-
-
 
 
 class DualDA:

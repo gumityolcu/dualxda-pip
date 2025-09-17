@@ -1,11 +1,10 @@
 import torch
 import matplotlib.pyplot as plt
-import numpy as np
 import matplotlib.transforms
 import matplotlib.path
 from matplotlib.collections import LineCollection
 import matplotlib.colors as colors
-
+import numpy as np
 from zennit.core import BasicHook
 
 
