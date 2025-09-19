@@ -1,0 +1,7 @@
+torch
+numpy
+tqdm
+torchvision
+sklearn@git
+zennit
+matplotlib
