@@ -2,6 +2,6 @@ torch
 numpy
 tqdm
 torchvision
-sklearn@git
+dualxda_skl
 zennit
 matplotlib
