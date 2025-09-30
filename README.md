@@ -1,12 +1,42 @@
 # **dualxda**: A Library for Efficient, Effective and Explainable Data Attributions
 
+<p style="font-size: 30px;"><b>DualXDA</b> delivers reliable, and extremely efficient data attribution, using orders-of-magnitude less time and memory while leading across diverse evaluation metrics. By combining data and feature attribution, DualXDA can explain the reasons for the attribution values it produces.</p>
+
+:newspaper: Check out our [paper](https://arxiv.org/abs/2402.12118)!
+
+:pencil2: Please cite us according to the bib entry below if you use DualXDA in your work:
+
+```
+@article{yolcu2025dualxda,
+      title={DualXDA: Towards Sparse, Efficient and Explainable Data Attribution in Large AI Models}, 
+      author={Galip Ümit Yolcu and Moritz Weckbecker and Thomas Wiegand and Wojciech Samek and Sebastian Lapuschkin},
+      year={2025},
+      eprint={2402.12118},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2402.12118}, 
+}
+```
+
+Here is an example explanation you can generate using this package, using the image of a wolf from the AwA2 dataset as the test image:
+
+<img src="./img/fig1.png" width="1300">
+
+In this figure, we see
+- **1-** A feature level explanation on the model decision (wolf). Blue color indicates negative evidence, whereas red color is used for regions that encourage the classification being explained. Surprisingly, the distinctive facial features are working against this classification.
+- **2-** Positively relevant training images, showing the evidence from the training dataset that corroborates the classification being explained.
+- **3 and 4-** Heatmaps showing the interaction between test and train features in determining the model output. We see that the model can match the snouts for the third and fourth images, and first two images contribute through fur features.
+- **5-** Negatively relevant training samples. Notice that they are all foxes.
+- **6 and 7-** We can now see that the LRP heatmap shows the snouts as a negatively relevant region, because the model detects similarity to the fox class through snout features. This reveals that for our model, snout features are detected on multiple canines and do not provide a robust basis for classification.   
+
+
 In this repository, we present our Python package that can be used to produce data attributions and feature level explanations of these attribution values.
 DualXDA is a methodology consisting of two steps:
 1. **DualDA** replaces the final linear layer of a neural network with a surrogate kernel machine. This naturally produces a model where the output is determined as a sum of contributions from each training point, which constitutes a data attribution strategy. DualDA provides state-of-the-art attribution quality while showcasing 11,000x or bigger improvements in the required computation time.
 
 2. **XDA**, on the other hand, relies on Layerwise Relevance Propagation to reveal the reasons for highly influential training data. For any given pair of train-test datapoints, XDA produces heatmaps concurrently on the two inputs, which indicate their interplay and the reasons for the computed attribution value for the training datapoint.
 
-We refer the reader to our publication [DualXDA: Towards Sparse, Efficient and Explainable Data Attribution in Large AI Models](https://arxiv.org/abs/2402.12118). Currently, only classification models can be attributed.
+For further details, we refer the reader to our publication [DualXDA: Towards Sparse, Efficient and Explainable Data Attribution in Large AI Models](https://arxiv.org/abs/2402.12118). Currently, only classification models can be attributed.
 
 
 ## Installation

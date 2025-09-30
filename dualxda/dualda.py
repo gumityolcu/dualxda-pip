@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & the authors: Galip Ümit Yolcu, Moritz Weckbecker, Wojciech Samek, Sebastian Lapuschkin.
+# Copyright (c) 2024, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & the authors: Galip Ümit Yolcu, Moritz Weckbecker, Thomas Wiegand, Wojciech Samek, Sebastian Lapuschkin.
 # Licensed under CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
 from .utils import display_img, colourgradarrow, InitRelevanceRule
 
@@ -15,6 +15,8 @@ from tqdm import tqdm
 from zennit.composites import (
     EpsilonPlusFlat,
     EpsilonPlus,
+    EpsilonAlpha2Beta1,
+    EpsilonAlpha2Beta1Flat,
     NameMapComposite,
     MixedComposite,
 )
@@ -264,13 +266,15 @@ class DualDA:
         return ret
 
     @classmethod
-    def _resolve_composite(cls, composite, canonizer=None, flat_layers=None):
+    def _resolve_composite(cls, composite, canonizer="SequentialMergeBatchNorm", flat_layers=None):
         canonizer_dict = {
             "SequentialMergeBatchNorm": SequentialMergeBatchNorm(),
         }
         composite_dict = {
-            "EpsilonPlusFlat": EpsilonPlusFlat,
             "EpsilonPlus": EpsilonPlus,
+            "EpsilonPlusFlat": EpsilonPlusFlat,
+            "EpsilonAlpha2Beta1": EpsilonAlpha2Beta1,
+            "EpsilonAlpha2Beta1Flat": EpsilonAlpha2Beta1Flat,
             # "EpsilonGammaBox": EpsilonGammaBox(zero_params='bias'),
         }
         canonizer = (
@@ -623,11 +627,8 @@ class DualDA:
         inv_transform,
         class_names,
         attr,
-        attr_target,
         fname,
         nsamples=5,
-        composite="EpsilonPlusFlat",
-        canonizer=None,
         save_path=None,
     ):
         test_sample = test_sample.to(self.device)
