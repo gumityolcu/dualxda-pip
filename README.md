@@ -20,7 +20,7 @@
 
 Here is an example explanation you can generate using this package, using the image of a wolf from the AwA2 dataset as the test image:
 
-<img src="./img/fig1.png" width="1300">
+<img src="./img/xda-output.png" width="1300">
 
 In this figure, we see
 - **1-** A feature level explanation on the model decision (wolf). Blue color indicates negative evidence, whereas red color is used for regions that encourage the classification being explained. Surprisingly, the distinctive facial features are working against this classification.
