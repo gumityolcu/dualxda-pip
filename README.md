@@ -70,13 +70,13 @@ linear {
 }
 </style>
 
-**1-** Our method assumes models with a nonlinear **feature extractor f** followed by a fully-connected layer as <linear>the classification head g</linear>.
+**1-** Our method assumes models with a nonlinear **feature extractor f** followed by a fully-connected layer as <span style="color:#FD8002">the classification head g</span>.
 
-**2-** DualDA substitutes the final layer of the original model with a <linear>linear SVM</linear>. The resulting weight vector <linear>w</linear> can then be expressed as a linear combination of the final layer **latent embeddings** of training samples. Note that a binary classification case is visualized for the sake of simplicity and legibility, whereas DualDA employs a multiclass SVM.
+**2-** DualDA substitutes the final layer of the original model with a <span style="color:#FD8002">linear SVM</span>. The resulting weight vector <span style="color:#FD8002">$w$</span> can then be expressed as a linear combination of the final layer **latent embeddings** of training samples. Note that a binary classification case is visualized for the sake of simplicity and legibility, whereas DualDA employs a multiclass SVM.
 
-**3-** The <global>global attribution</global> of each training datapoint is quantified by its corresponding scalar coefficient <global>\[ $\lambda_i$ \]</global> in the linear decomposition of <linear>w</linear>.
+**3-** The <global>global attribution</global> of each training datapoint is quantified by its corresponding scalar coefficient <global> $\lambda_i$</global> in the linear decomposition of <span style="color:#FD8002">$w$</span>.
 
-**4-** Moreover, since <linear>w</linear> is represented as a combination of training feature embeddings, we can decompose the output of the surrogate model for a given test point into a sum of contributions from each training sample.
+**4-** Moreover, since <span style="color:#FD8002">$w$</span> is represented as a combination of training feature embeddings, we can decompose the output of the surrogate model for a given test point into a sum of contributions from each training sample.
 This <local>local attribution</local> (i.e. the contribution of a training point to the prediction for a specific test point) is given by the inner product of the feature embeddings of the training and test samples, scaled by the global influence coefficient of the training sample.
 **5-** To trace these influences back to the input space, our XDA approach employs Layer-wise Relevance Propagation (LRP) on DualDA attributions. The method propagates the attributions from the surrogate model’s output, through the feature extractor, down to the input pixels for both training and test samples. The result is a pair of attribution heatmaps -- one for each training–test pair -- highlighting input regions that contributed positively or negatively to the model’s inference.
 
