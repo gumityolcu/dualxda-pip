@@ -71,9 +71,9 @@ linear {
 }
 </style> -->
 
-**1-** Our method assumes models with a nonlinear **feature extractor $f$** followed by a fully-connected layer as the <img src="img/text-0.png" height="1em" style="vertical-align: middle;"> .
+**1-** Our method assumes models with a nonlinear **feature extractor $f$** followed by a fully-connected layer as the <img src="img/text-0.png" height="12em" style="vertical-align: middle;"> .
 
-**2-** DualDA substitutes the final layer of the original model with a <span style="color:#FD8002">linear SVM</span>. The resulting weight vector <span style="color:#FD8002">$w$</span> can then be expressed as a linear combination of the final layer **latent embeddings** of training samples. Note that a binary classification case is visualized for the sake of simplicity and legibility, whereas DualDA employs a multiclass SVM.
+**2-** DualDA substitutes the final layer of the original model with a <img src="img/text-1.png" height="12em" style="vertical-align: middle;">. The resulting weight vector <img src="img/text-2.png" height="12em" style="vertical-align: middle;"> can then be expressed as a linear combination of the final layer **latent embeddings** of training samples. Note that a binary classification case is visualized for the sake of simplicity and legibility, whereas DualDA employs a multiclass SVM.
 
 **3-** The <global>global attribution</global> of each training datapoint is quantified by its corresponding scalar coefficient <global> $\lambda_i$</global> in the linear decomposition of <span style="color:#FD8002">$w$</span>.
 
