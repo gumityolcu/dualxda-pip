@@ -54,6 +54,7 @@ DualDA achieves efficient and effective explanations by using a Support Vector M
 
 <img src="./img/fig1.jpg" width="1300">
 
+<!-- 
 <style>
 
 global {
@@ -68,9 +69,9 @@ linear {
   color: #FD8002;
   font-weight: bold;
 }
-</style>
+</style> -->
 
-**1-** Our method assumes models with a nonlinear **feature extractor f** followed by a fully-connected layer as <span style="color:#FD8002">the classification head g</span>.
+**1-** Our method assumes models with a nonlinear <img src="img/colored_text_math-0.png" height="1em" style="vertical-align: middle;">  followed by a fully-connected layer as the **classification head g**.
 
 **2-** DualDA substitutes the final layer of the original model with a <span style="color:#FD8002">linear SVM</span>. The resulting weight vector <span style="color:#FD8002">$w$</span> can then be expressed as a linear combination of the final layer **latent embeddings** of training samples. Note that a binary classification case is visualized for the sake of simplicity and legibility, whereas DualDA employs a multiclass SVM.
 
