@@ -47,6 +47,15 @@ In order to install dualxda, use pip:
 
 If you are using another package manager, please first install our modification of the sklearn from [here](https://github.com/gumityolcu/scikit-learn-dual). Note that this will install a package with name, sklearn_dual and not clash with any other installation of sklearn.
 
+
+## How It Works
+
+DualDA achieves efficient and effective explanations by using a Support Vector Machine (SVM) as a surrogate model, which uses the penultimate hidden features as a kernel. Below figure illustrates the process:
+
+<img src="./img/fig1.jpg" width="1300">
+
+1- 
+
 ## Usage
 
 ### DualDA: Efficient Data Attribution using SVM surrogates
